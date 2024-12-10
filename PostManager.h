@@ -18,8 +18,13 @@ private:
 public:
     PostManager();
     ~PostManager();
+
     void createPost(const string& content, const string& author);
     vector<Post*> getAllPosts() const;
+
+    // New methods
+    bool likePost(int postId);
+    vector<Post*> viewTrendingPosts() const;
 };
 
 #endif
