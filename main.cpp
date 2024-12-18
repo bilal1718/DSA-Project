@@ -3,9 +3,8 @@
 #include <vector>
 #include "User.h"
 #include "PostManager.h"
+#include "FriendRequestManager.h"
 using namespace std;
-
-
 
 void showUserMenu() {
     cout << "\n--- User Menu ---\n";
@@ -13,22 +12,28 @@ void showUserMenu() {
     cout << "2. View All Posts\n";
     cout << "3. Like a Post\n";
     cout << "4. View Trending Posts\n";
-    cout << "5. Logout\n";
+    cout << "5. Send Friend Request\n";
+    cout << "6. Accept Friend Request\n";
+    cout << "7. Reject Friend Request\n";
+    cout << "8. Logout\n";
     cout << "Choose an option: ";
 }
+
 void showMenu() {
     cout << "\n--- Main Menu ---\n";
     cout << "1. Register\n";
     cout << "2. Login\n";
     cout << "3. Exit\n";
     cout << "Choose an option: ";
-};
+}
+
 int main() {
     User::loadUsersFromFile();
 
     int choice;
     string username, email, password;
     PostManager postManager;
+    FriendRequestManager friendRequestManager;
     User* loggedInUser = nullptr;
 
     while (true) {
@@ -96,6 +101,21 @@ int main() {
                     cout << "Likes: " << post->likes << "\n\n";
                 }
             } else if (choice == 5) {
+                string receiver;
+                cout << "Enter username to send friend request to: ";
+                cin >> receiver;
+                friendRequestManager.sendRequest(loggedInUser->username, receiver);
+            } else if (choice == 6) {
+                string sender;
+                cout << "Enter username to accept friend request from: ";
+                cin >> sender;
+                friendRequestManager.acceptRequest(loggedInUser->username, sender);
+            } else if (choice == 7) {
+                string sender;
+                cout << "Enter username to reject friend request from: ";
+                cin >> sender;
+                friendRequestManager.rejectRequest(loggedInUser->username, sender);
+            } else if (choice == 8) {
                 loggedInUser = nullptr;
                 cout << "Logged out successfully.\n";
             } else {
