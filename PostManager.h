@@ -3,6 +3,7 @@
 
 #include "Post.h"
 #include <vector>
+#include <string>
 
 struct PostNode {
     Post* post;
@@ -19,12 +20,16 @@ public:
     PostManager();
     ~PostManager();
 
-    void createPost(const string& content, const string& author);
-    vector<Post*> getAllPosts() const;
+    void createPost(const std::string& content, const std::string& author);
+    std::vector<Post*> getAllPosts() const;
+    void savePostsForUser(const std::string& username); 
+    void loadPostsForUser(const std::string& username);
 
-    // New methods
     bool likePost(int postId);
-    vector<Post*> viewTrendingPosts() const;
+    bool likeSpecificPost(Post* post);
+    std::vector<Post*> viewTrendingPosts() const;
+     std::string serializePostsForUser(const std::vector<Post*>& posts);
+    std::vector<Post*> deserializePostsForUser(const std::string& username);
 };
 
 #endif
