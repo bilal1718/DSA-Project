@@ -1,125 +1,236 @@
 #include <iostream>
-#include <fstream>
-#include <vector>
-#include "User.h"
-#include "PostManager.h"
-#include "FriendRequestManager.h"
+#include "DataManager.h"
 using namespace std;
 
-void showUserMenu() {
-    cout << "\n--- User Menu ---\n";
-    cout << "1. Create Post\n";
-    cout << "2. View All Posts\n";
-    cout << "3. Like a Post\n";
-    cout << "4. View Trending Posts\n";
-    cout << "5. Send Friend Request\n";
-    cout << "6. Accept Friend Request\n";
-    cout << "7. Reject Friend Request\n";
-    cout << "8. Logout\n";
-    cout << "Choose an option: ";
-}
-
-void showMenu() {
-    cout << "\n--- Main Menu ---\n";
+void showMainMenu() {
     cout << "1. Register\n";
     cout << "2. Login\n";
     cout << "3. Exit\n";
-    cout << "Choose an option: ";
+}
+void showFriendRequestMenu() {
+    cout << "1. View Friends\n";
+    cout << "2. Send Friend Request\n";
+    cout << "3. View Friend Requests\n";
+    cout << "4. Back to Main Menu\n";
+}
+
+void showPostMenu() {
+    cout << "1. Create Post\n";
+    cout << "2. Edit Post\n";
+    cout << "3. Delete Post\n";
+    cout << "4. Like Post\n";
+    cout << "5. Display Posts\n";
+    cout << "6. Friends\n";
+    cout << "7. View Notifications\n";
+    cout << "8. Logout\n";
 }
 
 int main() {
-    User::loadUsersFromFile();
+    DataManager dataManager;
+    
+    if (!dataManager.loadUserData() || !dataManager.loadPostData() || !dataManager.loadFriendsList()) {
+        cerr << "Error: Failed to load data!" << endl;
+        return 1;
+    }
+    dataManager.loadUserData();
+    dataManager.loadPostData();
+    dataManager.loadFriendsList();
 
-    int choice;
-    string username, email, password;
-    PostManager postManager;
-    FriendRequestManager friendRequestManager;
-    User* loggedInUser = nullptr;
+    string currentUser;
+    bool loggedIn = false;
 
     while (true) {
-        if (!loggedInUser) {
-            showMenu();
-            cin >> choice;
+        showMainMenu();
+        int choice;
+        cout << "Enter your choice: ";
+        cin >> choice;
 
-            if (choice == 1) {
-                cout << "Enter username: ";
-                cin >> username;
-                cout << "Enter email: ";
-                cin >> email;
-                cout << "Enter password: ";
-                cin >> password;
-
-                User::registerUser(username, email, password);
-                User::saveUsersToFile();
-            } else if (choice == 2) {
-                cout << "Enter username: ";
-                cin >> username;
-                cout << "Enter password: ";
-                cin >> password;
-
-                loggedInUser = User::loginUser(username, password);
-                if (loggedInUser) {
-                    cout << "Welcome, " << loggedInUser->username << "!" << endl;
-                }
-            } else if (choice == 3) {
-                cout << "Exiting program...\n";
-                break;
+        if (choice == 1) { // Register
+            string username, email, password;
+            cout << "Enter username: ";
+            cin >> username;
+            cout << "Enter email: ";
+            cin >> email;
+            cout << "Enter password: ";
+            cin >> password;
+            if (dataManager.registerUser(username, email, password)) {
+                dataManager.saveUserData();
+                cout << "Registration successful!\n";
             } else {
-                cout << "Invalid option. Please try again.\n";
+                cout << "Error: Registration failed.\n";
             }
+        } else if (choice == 2) { // Login
+            string username, password;
+            cout << "Enter username: ";
+            cin >> username;
+            cout << "Enter password: ";
+            cin >> password;
+            if (dataManager.loginUser(username, password)) {
+                loggedIn = true;
+                currentUser = username;
+                cout << "Login successful!\n";
+            } else {
+                cout << "Error: Login failed.\n";
+            }
+        } else if (choice == 3) { // Exit
+            dataManager.saveUserData();
+            dataManager.savePostData();
+            dataManager.saveFriendsList();
+            cout << "Exiting program. Data saved.\n";
+            break;
         } else {
-            showUserMenu();
-            cin >> choice;
+            cout << "Invalid choice. Try again.\n";
+        }
 
-            if (choice == 1) {
+        while (loggedIn) {
+            showPostMenu();
+            int postChoice;
+            cout << "Enter your choice: ";
+            cin >> postChoice;
+
+            if (postChoice == 1) { // Create Post
                 string content;
                 cout << "Enter post content: ";
                 cin.ignore();
                 getline(cin, content);
-                postManager.createPost(content, loggedInUser->username);
-            } else if (choice == 2) {
-                vector<Post*> posts = postManager.getAllPosts();
-                cout << "\n--- All Posts ---\n";
-                for (const auto& post : posts) {
-                    cout << "Post ID: " << post->postId << "\n";
-                    cout << "Author: " << post->author << "\n";
-                    cout << "Content: " << post->content << "\n";
-                    cout << "Likes: " << post->likes << "\n\n";
-                }
-            } else if (choice == 3) {
+                int postId = dataManager.createPost(currentUser, content);
+                cout << "Post created with ID: " << postId << endl;
+                            dataManager.savePostData();
+
+
+            } else if (postChoice == 2) { // Edit Post
                 int postId;
-                cout << "Enter Post ID to like: ";
+                string newContent;
+                cout << "Enter post ID to edit: ";
                 cin >> postId;
-                postManager.likePost(postId);
-            } else if (choice == 4) {
-                vector<Post*> trendingPosts = postManager.viewTrendingPosts();
-                cout << "\n--- Trending Posts ---\n";
-                for (const auto& post : trendingPosts) {
-                    cout << "Post ID: " << post->postId << "\n";
-                    cout << "Author: " << post->author << "\n";
-                    cout << "Content: " << post->content << "\n";
-                    cout << "Likes: " << post->likes << "\n\n";
+                cout << "Enter new content: ";
+                cin.ignore();
+                getline(cin, newContent);
+                if (dataManager.editPost(postId, newContent)) {
+                    cout << "Post updated.\n";
+                } else {
+                    cout << "Error: Post not found.\n";
                 }
-            } else if (choice == 5) {
-                string receiver;
-                cout << "Enter username to send friend request to: ";
-                cin >> receiver;
-                friendRequestManager.sendRequest(loggedInUser->username, receiver);
-            } else if (choice == 6) {
-                string sender;
-                cout << "Enter username to accept friend request from: ";
-                cin >> sender;
-                friendRequestManager.acceptRequest(loggedInUser->username, sender);
-            } else if (choice == 7) {
-                string sender;
-                cout << "Enter username to reject friend request from: ";
-                cin >> sender;
-                friendRequestManager.rejectRequest(loggedInUser->username, sender);
-            } else if (choice == 8) {
-                loggedInUser = nullptr;
-                cout << "Logged out successfully.\n";
+                            dataManager.savePostData();
+
+
+            } else if (postChoice == 3) { // Delete Post
+                int postId;
+                cout << "Enter post ID to delete: ";
+                cin >> postId;
+                if (dataManager.deletePost(postId)) {
+                    cout << "Post deleted.\n";
+                } else {
+                    cout << "Error: Post not found.\n";
+                }
+                            dataManager.savePostData();
+
+
+            } else if (postChoice == 4) { // Like Post
+                int postId;
+                cout << "Enter post ID to like: ";
+                cin >> postId;
+                if (dataManager.likePost(postId)) {
+                    dataManager.notifyPostLiked(postId, currentUser);
+                    cout << "Post liked.\n";
+                } else {
+                    cout << "Error: Post not found.\n";
+                }
+                         dataManager.savePostData();
+
+            } else if (postChoice == 5) { // Display Posts
+                dataManager.displayPosts();
+
+            } else if (postChoice == 6) { // Friends
+                while (true) {
+                    showFriendRequestMenu();
+                    int frChoice;
+                    cout << "Enter your choice: ";
+                    cin >> frChoice;
+
+                    if (frChoice == 1) { // View Friends
+                        dataManager.displayFriends(currentUser);
+
+                    } else if (frChoice == 2) { // Send Friend Request
+                        vector<string> nonFriends = dataManager.getNonFriends(currentUser);
+                        if (nonFriends.empty()) {
+                            cout << "No users available to send friend requests to.\n";
+                        } else {
+                            cout << "Available users to send friend requests:\n";
+                            for (int i = 0; i < nonFriends.size(); ++i) {
+                                cout << i + 1 << ". " << nonFriends[i] << endl;
+                            }
+                            int userIndex;
+                            cout << "Enter the number of the user: ";
+                            cin >> userIndex;
+                            if (userIndex > 0 && userIndex <= nonFriends.size()) {
+    string toUser = nonFriends[userIndex - 1]; // Assign toUser here
+    if (dataManager.sendFriendRequest(currentUser, toUser)) {
+        cout << "Friend request sent to " << toUser << endl;
+        dataManager.notifyNewFriendRequest(currentUser, toUser); // Use toUser here
+    } else {
+        cout << "Error: Could not send friend request.\n";
+    }
+} else {
+    cout << "Invalid selection.\n";
+}
+                        }
+                    } else if (frChoice == 3) { // Handle Friend Requests
+                        vector<string> friendRequests = dataManager.getFriendRequests(currentUser);
+                        if (friendRequests.empty()) {
+                            cout << "No friend requests available.\n";
+                        } else {
+                            cout << "Incoming friend requests:\n";
+                            for (int i = 0; i < friendRequests.size(); ++i) {
+                                cout << i + 1 << ". " << friendRequests[i] << endl;
+                            }
+                            int requestIndex;
+                            cout << "Enter the number of the request to handle: ";
+                            cin >> requestIndex;
+                            if (requestIndex > 0 && requestIndex <= friendRequests.size()) {
+                                cout << "1. Accept\n";
+                                cout << "2. Reject\n";
+                                int action;
+                                cin >> action;
+                                if (action == 1) {
+                                    if (dataManager.acceptFriendRequest(friendRequests[requestIndex - 1], currentUser)) {
+                                        cout << "Friend request accepted.\n";
+                                        dataManager.notifyAcceptedFriendRequest(currentUser,friendRequests[requestIndex - 1]);
+                                    } else {
+                                        cout << "Error: Could not accept friend request.\n";
+                                    }
+                                } else if (action == 2) {
+                                    if (dataManager.rejectFriendRequest(friendRequests[requestIndex - 1], currentUser)) {
+                                        cout << "Friend request rejected.\n";
+                                    } else {
+                                        cout << "Error: Could not reject friend request.\n";
+                                    }
+                                } else {
+                                    cout << "Invalid action.\n";
+                                }
+                            } else {
+                                cout << "Invalid selection.\n";
+                            }
+                        }
+
+                    } else if (frChoice == 4) {
+                        break;
+                    } else {
+                        cout << "Invalid choice. Try again.\n";
+                    }
+                }
+
+            }
+            else if (postChoice == 7) {
+dataManager.getUserData()[currentUser].showNotifications();
+        } 
+            
+            else if (postChoice == 8) { 
+                loggedIn = false;
+                cout << "Logged out.\n";
+
             } else {
-                cout << "Invalid option. Please try again.\n";
+                cout << "Invalid choice. Try again.\n";
             }
         }
     }
