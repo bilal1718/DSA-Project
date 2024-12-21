@@ -1,6 +1,9 @@
 #include <iostream>
 #include "DataManager.h"
+// #include <filesystem>
+
 using namespace std;
+
 
 void showMainMenu() {
     cout << "1. Register\n";
@@ -14,23 +17,81 @@ void showFriendRequestMenu() {
     cout << "4. Friend Suggestions\n";
     cout << "5. Back to Main Menu\n";
 }
-
 void showPostMenu() {
     cout << "1. Create Post\n";
-    cout << "2. Edit Post\n";
-    cout << "3. Delete Post\n";
-    cout << "4. Like Post\n";
-    cout << "5. Display Posts\n";
-    cout << "6. Friends\n";
-    cout << "7. View Notifications\n";
-    cout << "8. Search Profiles\n";
+    cout << "2. View Profile\n";
+    cout << "3. Like Post\n";
+    cout << "4. Display Posts\n";
+    cout << "5. Friends\n";
+    cout << "6. View Notifications\n";
+    cout << "7. Search Profiles\n";
+    cout << "8. View Trending Posts\n";
     cout << "9. Logout\n";
 }
+void viewProfile(DataManager& dataManager, const string& currentUser) {
+    cout << "Your Posts:\n";
+    vector<int> userPostIds;
+
+    for (const auto& post : dataManager.getPosts()) {
+        if (post.second.getUsername() == currentUser) {
+            cout << "Post ID: " << post.first << "\n";
+            cout << "Content: " << post.second.getContent() << "\n";
+            cout << "Likes: " << post.second.getLikes() << "\n";
+            cout << "----------------------\n";
+            userPostIds.push_back(post.first);
+        }
+    }
+
+    if (userPostIds.empty()) {
+        cout << "You have no posts.\n";
+        return;
+    }
+
+    int choice;
+    cout << "1. Edit a Post\n2. Delete a Post\n3. Back\n";
+    cout << "Enter your choice: ";
+    cin >> choice;
+
+    if (choice == 1) {
+        int postId;
+        cout << "Enter Post ID to edit: ";
+        cin >> postId;
+
+        if (find(userPostIds.begin(), userPostIds.end(), postId) != userPostIds.end()) {
+            string newContent;
+            cout << "Enter new content: ";
+            cin.ignore();
+            getline(cin, newContent);
+
+            if (dataManager.editPost(postId, newContent)) {
+                cout << "Post updated successfully.\n";
+            } else {
+                cout << "Error: Could not edit the post.\n";
+            }
+        } else {
+            cout << "Error: Invalid Post ID.\n";
+        }
+    } else if (choice == 2) {
+        int postId;
+        cout << "Enter Post ID to delete: ";
+        cin >> postId;
+
+        if (find(userPostIds.begin(), userPostIds.end(), postId) != userPostIds.end()) {
+            if (dataManager.deletePost(postId)) {
+                cout << "Post deleted successfully.\n";
+            } else {
+                cout << "Error: Could not delete the post.\n";
+            }
+        } else {
+            cout << "Error: Invalid Post ID.\n";
+        }
+    }
+}
+
 void showSearchMenu() {
     cout << "1. Search Profiles\n";
     cout << "2. Back to Main Menu\n";
 }
-
 int main() {
     DataManager dataManager;
     
@@ -101,38 +162,14 @@ int main() {
                 getline(cin, content);
                 int postId = dataManager.createPost(currentUser, content);
                 cout << "Post created with ID: " << postId << endl;
-                            dataManager.savePostData();
+                dataManager.savePostData();
 
 
             } else if (postChoice == 2) { 
-                int postId;
-                string newContent;
-                cout << "Enter post ID to edit: ";
-                cin >> postId;
-                cout << "Enter new content: ";
-                cin.ignore();
-                getline(cin, newContent);
-                if (dataManager.editPost(postId, newContent)) {
-                    cout << "Post updated.\n";
-                } else {
-                    cout << "Error: Post not found.\n";
-                }
-                            dataManager.savePostData();
-
-
-            } else if (postChoice == 3) { 
-                int postId;
-                cout << "Enter post ID to delete: ";
-                cin >> postId;
-                if (dataManager.deletePost(postId)) {
-                    cout << "Post deleted.\n";
-                } else {
-                    cout << "Error: Post not found.\n";
-                }
-                            dataManager.savePostData();
-
-
-            } else if (postChoice == 4) { 
+                viewProfile(dataManager, currentUser);
+        dataManager.savePostData();
+            } 
+             else if (postChoice == 3) { 
                 int postId;
                 cout << "Enter post ID to like: ";
                 cin >> postId;
@@ -144,10 +181,10 @@ int main() {
                 }
                          dataManager.savePostData();
 
-            } else if (postChoice == 5) {
+            } else if (postChoice == 4) {
                 dataManager.displayPosts();
 
-            } else if (postChoice == 6) { 
+            } else if (postChoice == 5) { 
                 while (true) {
                     showFriendRequestMenu();
                     int frChoice;
@@ -257,11 +294,11 @@ int main() {
                 }
 
             }
-            else if (postChoice == 7) {
+            else if (postChoice == 6) {
 dataManager.getUserData()[currentUser].showNotifications();
         } 
 
-        else if (postChoice == 8) {
+        else if (postChoice == 7) {
     while (true) {
         showSearchMenu();
         int searchChoice;
@@ -313,7 +350,40 @@ dataManager.getUserData()[currentUser].showNotifications();
         }
     }
 }
-            
+      else if (postChoice == 8) { 
+   cout << "Trending Posts:\n";
+    vector<int> trendingPosts = dataManager.getTrendingPosts(5);
+    for (int postId : trendingPosts) {
+        const Post& post = dataManager.getPosts()[postId];
+        cout << "Post ID: " << postId << "\n";
+        cout << "User: " << post.getUsername() << "\n";
+        cout << "Content: " << post.getContent() << "\n";
+        cout << "Likes: " << post.getLikes() << "\n";
+        cout << "---------------------\n";
+    }
+
+    if (!trendingPosts.empty()) {
+        cout << "Do you want to like a trending post? (y/n): ";
+        char likeChoice;
+        cin >> likeChoice;
+        if (likeChoice == 'y' || likeChoice == 'Y') {
+            int postIdToLike;
+            cout << "Enter Post ID to like: ";
+            cin >> postIdToLike;
+
+            if (dataManager.likePost(postIdToLike)) {
+                dataManager.notifyPostLiked(postIdToLike, currentUser);
+                cout << "Post liked successfully.\n";
+                dataManager.savePostData();
+
+            } else {
+                cout << "Error: Post not found.\n";
+            }
+        }
+    } else {
+        cout << "No trending posts available right now.\n";
+    }
+}      
             else if (postChoice == 9) { 
                 loggedIn = false;
                 cout << "Logged out.\n";
