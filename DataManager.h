@@ -12,16 +12,17 @@ private:
     unordered_map<string, User> userData;
     unordered_map<int, Post> posts;
     int postIdCounter = 0;
-
 public:
     bool loadUserData();
-    unordered_map<string, User>& getUserData(); // Add this accessor declaration
+    unordered_map<string, User>& getUserData();
+
+        vector<int> getTrendingPosts(int topN);
+
 
     bool saveUserData();
     bool savePostData();
     bool loadPostData();
 
-    // Friends list file handling
     bool saveFriendsList();
     bool loadFriendsList();
 
@@ -33,7 +34,6 @@ public:
     bool deletePost(int postId);
     void displayPosts() const;
 
-    // Friend Request Functions
     bool sendFriendRequest(const string& fromUser, const string& toUser);
     bool cancelFriendRequest(const string& fromUser, const string& toUser);
     bool acceptFriendRequest(const string& fromUser, const string& toUser);
@@ -47,7 +47,6 @@ void notifyPostLiked(int postId, const string& liker);
 vector<pair<string, int>> getFriendSuggestions(const string& username);
 vector<string> searchProfiles(const string& query);
 vector<string> getUserPosts(const string& username);
-    // Accessor functions
     unordered_map<int, Post>& getPosts();
     unordered_map<string, User>& getUsers();
 };
