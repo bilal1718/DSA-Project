@@ -5,15 +5,30 @@
 using namespace std;
 
 class Post {
-public:
-    int postId;
+private:
+    string username;
     string content;
-    string author;
     int likes;
 
-    Post(int postId, const string& content, const string& author);
+public:
+    Post(const string& user, const string& text)
+        : username(user), content(text), likes(0) {}
 
-    void likePost();
+    Post() : username(""), content("[No content]"), likes(0) {}
+
+    const string& getUsername() const { return username; }
+    const string& getContent() const { return content; }
+    int getLikes() const { return likes; }
+
+    void addLike() { likes++; }
+
+    void editContent(const string& newContent) {
+        content = newContent;
+    }
+
+    void deletePost() {
+        content = "[Post deleted]";
+    }
 };
 
 #endif
