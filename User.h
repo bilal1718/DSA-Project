@@ -1,50 +1,48 @@
 #ifndef USER_H
 #define USER_H
-
 #include <string>
+#include <unordered_set>
+#include <algorithm>
 #include <vector>
-#include <unordered_map>
 #include <queue>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include "PostManager.h"
-
 using namespace std;
 
 class User {
-public:
-    static PostManager postManager;  
-    // PostManager User::postManager;
+private:
     string username;
     string email;
     string password;
-
-    queue<string> friendRequests;
     vector<string> friends;
+    unordered_set<string> pendingRequests; 
     queue<string> notifications;
 
-    User(string username, string email, string password);
+public:
+    User() = default;
+    User(const string& username, const string& email, const string& password);
 
-    static bool registerUser(const string& username, const string& email, const string& password);
-    static User* loginUser(const string& username, const string& password);
+    string getUsername() const;
+    string getEmail() const;
+    string getPassword() const;
+    void addNotification(const string& notification);
+    void showNotifications();
 
-    static void saveUsersToFile();
-    static void loadUsersFromFile();
+    void setEmail(const string& newEmail);
+    void setPassword(const string& newPassword);
 
     void addFriend(const string& friendUsername);
-    void addFriendRequest(const string& sender);
+    void removeFriend(const string& friendUsername);
+    
+    void sendFriendRequest(const string& user);
+    void cancelFriendRequest(const string& user);
+    void acceptFriendRequest(const string& user);
+    void rejectFriendRequest(const string& user);
 
-    void addNotification(const string& message);
-    void viewNotifications();
+    const vector<string>& getFriends() const;
+    unordered_set<string>& getPendingRequests();
 
-    static User* getUserByUsername(const string& username);
-
-private:
-    static unordered_map<string, User*> users;
-
-    static string serializeQueue(queue<string> q);
-    static queue<string> deserializeQueue(const string& data);
+    vector<string> getFriendRequests() const;
+    bool isFriend(const string& username) const; 
+    bool hasPendingRequest(const string& username) const;
 };
 
-#endif
+#endif 
