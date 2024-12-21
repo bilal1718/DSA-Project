@@ -5,6 +5,36 @@
 
 using namespace std;
 
+
+
+vector<string> DataManager::searchProfiles(const string& query) {
+    vector<string> searchResults;
+    for (const auto& pair : userData) {
+        const string& username = pair.first;
+        const User& user = pair.second;
+
+        if (username.find(query) != string::npos || user.getUsername().find(query) != string::npos) {
+            searchResults.push_back(username);
+        }
+    }
+    return searchResults;
+}
+
+
+vector<string> DataManager::getUserPosts(const string& username) {
+    vector<string> userPosts;
+
+    for (const auto& pair : posts) {
+        const Post& post = pair.second;
+        if (post.getUsername() == username) {
+            userPosts.push_back(post.getContent());
+        }
+    }
+
+    return userPosts;
+}
+
+
 bool DataManager::saveFriendsList() {
     std::ofstream outFile("C:/Users/CT/Desktop/dsa-project/friends_list.txt");
     if (!outFile.is_open()) {
@@ -28,7 +58,6 @@ bool DataManager::saveFriendsList() {
     return true;
 }
 
-// Load friends list from a file
 bool DataManager::loadFriendsList() {
     std::ifstream inFile("C:/Users/CT/Desktop/dsa-project/friends_list.txt");
     if (!inFile.is_open()) {
@@ -44,7 +73,7 @@ bool DataManager::loadFriendsList() {
         string username = line.substr(0, colonPos);
         string friendsStr = line.substr(colonPos + 1);
 
-        if (userData.find(username) == userData.end()) continue; // Skip if user not found
+        if (userData.find(username) == userData.end()) continue;
 
         User& user = userData[username];
 
@@ -96,8 +125,8 @@ vector<string> DataManager::getFriendRequests(const string& username) {
 }
 vector<string> DataManager::getNonFriends(const string& username) {
     vector<string> nonFriends;
-    for (const auto& pair : userData) {  // Iterate over userData
-        const auto& user = pair.second;  // Get the User object
+    for (const auto& pair : userData) {  
+        const auto& user = pair.second; 
         if (user.getUsername() != username && 
             !user.isFriend(username) && 
             !user.hasPendingRequest(username)) {
@@ -111,7 +140,7 @@ vector<string> DataManager::getNonFriends(const string& username) {
 
 void DataManager::displayFriends(const string& username) const {
     if (userData.find(username) != userData.end()) {
-        const auto& friends = userData.at(username).getFriends();  // Now works because getFriends() is const
+        const auto& friends = userData.at(username).getFriends();
         cout << "Friends of " << username << ":\n";
         for (const auto& friendName : friends) {
             cout << friendName << "\n";
@@ -126,7 +155,7 @@ bool DataManager::loadUserData() {
     ifstream file("C:\\Users\\CT\\Desktop\\dsa-project\\users.txt");
     if (!file.is_open()) {
         cout << "Failed to open users.txt or file does not exist.\n";
-        return false;  // If the file doesn't exist, nothing to load
+        return false; 
     }
 
     string username, email, password;
@@ -135,7 +164,7 @@ bool DataManager::loadUserData() {
     }
 
     file.close();
-    cout << "Loaded " << userData.size() << " users from file.\n";  // Debugging message
+    cout << "Loaded " << userData.size() << " users from file.\n";
     return true;
 }
 
@@ -143,7 +172,7 @@ bool DataManager::saveUserData() {
     ofstream file("C:\\Users\\CT\\Desktop\\dsa-project\\users.txt", ios::trunc);
     if (!file.is_open()) {
         cout << "Failed to open users.txt for writing.\n";
-        return false;  // Failed to open file for writing
+        return false; 
     }
     for (auto it = userData.begin(); it != userData.end(); ++it) {
         file << it->second.getUsername() << " "
@@ -157,12 +186,12 @@ bool DataManager::saveUserData() {
 bool DataManager::registerUser(const string& username, const string& email, const string& password) {
     if (userData.find(username) != userData.end()) {
         cout << "Username already exists.\n";
-        return false;  // Username already exists, registration failed
+        return false; 
     }
 
-    userData[username] = User(username, email, password);  // Add new user to userData map
+    userData[username] = User(username, email, password);
     cout << "Registration successful!\n";
-    return true;  // Successful registration
+    return true;
 }
 
 bool DataManager::loginUser(const string& username, const string& password) {
@@ -264,7 +293,6 @@ bool DataManager::savePostData() {
     return true;
 }
 
-// Notify user of a new friend request
 void DataManager::notifyNewFriendRequest(const string& fromUser, const string& toUser) {
     if (userData.find(toUser) != userData.end()) {
         string notification = "You have a new friend request from " + fromUser + ".";
@@ -272,7 +300,6 @@ void DataManager::notifyNewFriendRequest(const string& fromUser, const string& t
     }
 }
 
-// Notify user of an accepted friend request
 void DataManager::notifyAcceptedFriendRequest(const string& fromUser, const string& toUser) {
     if (userData.find(toUser) != userData.end()) {
         string notification = fromUser + " has accepted your friend request.";
@@ -280,7 +307,6 @@ void DataManager::notifyAcceptedFriendRequest(const string& fromUser, const stri
     }
 }
 
-// Notify user when their post is liked
 void DataManager::notifyPostLiked(int postId, const string& liker) {
     if (posts.find(postId) != posts.end()) {
         string username = posts[postId].getUsername();

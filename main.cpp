@@ -23,7 +23,12 @@ void showPostMenu() {
     cout << "5. Display Posts\n";
     cout << "6. Friends\n";
     cout << "7. View Notifications\n";
-    cout << "8. Logout\n";
+    cout << "8. Search Profiles\n";
+    cout << "9. Logout\n";
+}
+void showSearchMenu() {
+    cout << "1. Search Profiles\n";
+    cout << "2. Back to Main Menu\n";
 }
 
 int main() {
@@ -46,7 +51,7 @@ int main() {
         cout << "Enter your choice: ";
         cin >> choice;
 
-        if (choice == 1) { // Register
+        if (choice == 1) { 
             string username, email, password;
             cout << "Enter username: ";
             cin >> username;
@@ -60,7 +65,7 @@ int main() {
             } else {
                 cout << "Error: Registration failed.\n";
             }
-        } else if (choice == 2) { // Login
+        } else if (choice == 2) {
             string username, password;
             cout << "Enter username: ";
             cin >> username;
@@ -73,7 +78,7 @@ int main() {
             } else {
                 cout << "Error: Login failed.\n";
             }
-        } else if (choice == 3) { // Exit
+        } else if (choice == 3) { 
             dataManager.saveUserData();
             dataManager.savePostData();
             dataManager.saveFriendsList();
@@ -89,7 +94,7 @@ int main() {
             cout << "Enter your choice: ";
             cin >> postChoice;
 
-            if (postChoice == 1) { // Create Post
+            if (postChoice == 1) { 
                 string content;
                 cout << "Enter post content: ";
                 cin.ignore();
@@ -99,7 +104,7 @@ int main() {
                             dataManager.savePostData();
 
 
-            } else if (postChoice == 2) { // Edit Post
+            } else if (postChoice == 2) { 
                 int postId;
                 string newContent;
                 cout << "Enter post ID to edit: ";
@@ -115,7 +120,7 @@ int main() {
                             dataManager.savePostData();
 
 
-            } else if (postChoice == 3) { // Delete Post
+            } else if (postChoice == 3) { 
                 int postId;
                 cout << "Enter post ID to delete: ";
                 cin >> postId;
@@ -127,7 +132,7 @@ int main() {
                             dataManager.savePostData();
 
 
-            } else if (postChoice == 4) { // Like Post
+            } else if (postChoice == 4) { 
                 int postId;
                 cout << "Enter post ID to like: ";
                 cin >> postId;
@@ -139,20 +144,20 @@ int main() {
                 }
                          dataManager.savePostData();
 
-            } else if (postChoice == 5) { // Display Posts
+            } else if (postChoice == 5) {
                 dataManager.displayPosts();
 
-            } else if (postChoice == 6) { // Friends
+            } else if (postChoice == 6) { 
                 while (true) {
                     showFriendRequestMenu();
                     int frChoice;
                     cout << "Enter your choice: ";
                     cin >> frChoice;
 
-                    if (frChoice == 1) { // View Friends
+                    if (frChoice == 1) { 
                         dataManager.displayFriends(currentUser);
 
-                    } else if (frChoice == 2) { // Send Friend Request
+                    } else if (frChoice == 2) {
                         vector<string> nonFriends = dataManager.getNonFriends(currentUser);
                         if (nonFriends.empty()) {
                             cout << "No users available to send friend requests to.\n";
@@ -165,10 +170,10 @@ int main() {
                             cout << "Enter the number of the user: ";
                             cin >> userIndex;
                             if (userIndex > 0 && userIndex <= nonFriends.size()) {
-    string toUser = nonFriends[userIndex - 1]; // Assign toUser here
+    string toUser = nonFriends[userIndex - 1];
     if (dataManager.sendFriendRequest(currentUser, toUser)) {
         cout << "Friend request sent to " << toUser << endl;
-        dataManager.notifyNewFriendRequest(currentUser, toUser); // Use toUser here
+        dataManager.notifyNewFriendRequest(currentUser, toUser);
     } else {
         cout << "Error: Could not send friend request.\n";
     }
@@ -176,7 +181,7 @@ int main() {
     cout << "Invalid selection.\n";
 }
                         }
-                    } else if (frChoice == 3) { // Handle Friend Requests
+                    } else if (frChoice == 3) {
                         vector<string> friendRequests = dataManager.getFriendRequests(currentUser);
                         if (friendRequests.empty()) {
                             cout << "No friend requests available.\n";
@@ -217,7 +222,7 @@ int main() {
                         }
 
                     } 
-                    else if (frChoice == 4) { // Friend Suggestions
+                    else if (frChoice == 4) {
             vector<pair<string, int>> suggestions = dataManager.getFriendSuggestions(currentUser);
             if (suggestions.empty()) {
                 cout << "No friend suggestions available.\n";
@@ -255,8 +260,61 @@ int main() {
             else if (postChoice == 7) {
 dataManager.getUserData()[currentUser].showNotifications();
         } 
+
+        else if (postChoice == 8) {
+    while (true) {
+        showSearchMenu();
+        int searchChoice;
+        cout << "Enter your choice: ";
+        cin >> searchChoice;
+
+        if (searchChoice == 1) {
+            string searchQuery;
+            cout << "Enter name or username to search: ";
+            cin >> searchQuery;
+
+            vector<string> searchResults = dataManager.searchProfiles(searchQuery);
+            if (searchResults.empty()) {
+                cout << "No profiles found matching the query.\n";
+            } else {
+                cout << "Search Results:\n";
+                for (int i = 0; i < searchResults.size(); ++i) {
+                    cout << i + 1 << ". " << searchResults[i] << endl;
+
+                    vector<string> userPosts = dataManager.getUserPosts(searchResults[i]);
+                    cout << "  Posts:\n";
+                    for (const string& post : userPosts) {
+                        cout << "    - " << post << endl;
+                    }
+                }
+
+                int userIndex;
+                cout << "Enter the number of the user to send a friend request or 0 to go back: ";
+                cin >> userIndex;
+
+                if (userIndex > 0 && userIndex <= searchResults.size()) {
+                    string selectedUser = searchResults[userIndex - 1];
+                    if (dataManager.sendFriendRequest(currentUser, selectedUser)) {
+                        cout << "Friend request sent to " << selectedUser << ".\n";
+                        dataManager.notifyNewFriendRequest(currentUser, selectedUser);
+                    } else {
+                        cout << "Error: Could not send friend request.\n";
+                    }
+                } else if (userIndex == 0) {
+                    break;
+                } else {
+                    cout << "Invalid selection.\n";
+                }
+            }
+        } else if (searchChoice == 2) {
+            break;
+        } else {
+            cout << "Invalid choice. Try again.\n";
+        }
+    }
+}
             
-            else if (postChoice == 8) { 
+            else if (postChoice == 9) { 
                 loggedIn = false;
                 cout << "Logged out.\n";
 
