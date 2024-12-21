@@ -12,7 +12,6 @@ vector<string> DataManager::searchProfiles(const string& query) {
     for (const auto& pair : userData) {
         const string& username = pair.first;
         const User& user = pair.second;
-
         if (username.find(query) != string::npos || user.getUsername().find(query) != string::npos) {
             searchResults.push_back(username);
         }
@@ -20,7 +19,30 @@ vector<string> DataManager::searchProfiles(const string& query) {
     return searchResults;
 }
 
+vector<int> DataManager::getTrendingPosts(int topN) {
+    vector<pair<int, int>> postLikes;
 
+    for (const auto& pair : posts) {
+        postLikes.push_back({pair.first, pair.second.getLikes()});
+    }
+
+    for (int i = 0; i < postLikes.size(); ++i) {
+        for (int j = i + 1; j < postLikes.size(); ++j) {
+            if (postLikes[j].second > postLikes[i].second) {
+                pair<int, int> temp = postLikes[i];
+                postLikes[i] = postLikes[j];
+                postLikes[j] = temp;
+            }
+        }
+    }
+
+    vector<int> trendingPosts;
+    for (int i = 0; i < topN && i < postLikes.size(); ++i) {
+        trendingPosts.push_back(postLikes[i].first);
+    }
+
+    return trendingPosts;
+}
 vector<string> DataManager::getUserPosts(const string& username) {
     vector<string> userPosts;
 
@@ -36,7 +58,7 @@ vector<string> DataManager::getUserPosts(const string& username) {
 
 
 bool DataManager::saveFriendsList() {
-    std::ofstream outFile("C:/Users/CT/Desktop/dsa-project/friends_list.txt");
+    ofstream outFile("C:/Users/CT/Desktop/dsa-project/friends_list.txt");
     if (!outFile.is_open()) {
         std::cerr << "Error: Unable to open friends list file for saving!" << std::endl;
         return false;
@@ -59,7 +81,7 @@ bool DataManager::saveFriendsList() {
 }
 
 bool DataManager::loadFriendsList() {
-    std::ifstream inFile("C:/Users/CT/Desktop/dsa-project/friends_list.txt");
+    ifstream inFile("C:/Users/CT/Desktop/dsa-project/friends_list.txt");
     if (!inFile.is_open()) {
         std::cerr << "Error: Unable to open friends list file for loading!" << std::endl;
         return false;
@@ -135,9 +157,6 @@ vector<string> DataManager::getNonFriends(const string& username) {
     }
     return nonFriends;
 }
-
-
-
 void DataManager::displayFriends(const string& username) const {
     if (userData.find(username) != userData.end()) {
         const auto& friends = userData.at(username).getFriends();
@@ -149,8 +168,6 @@ void DataManager::displayFriends(const string& username) const {
         cout << "User not found.\n";
     }
 }
-
-
 bool DataManager::loadUserData() {
     ifstream file("C:\\Users\\CT\\Desktop\\dsa-project\\users.txt");
     if (!file.is_open()) {
@@ -214,6 +231,7 @@ int DataManager::createPost(const string& username, const string& content) {
 bool DataManager::likePost(int postId) {
     if (posts.find(postId) != posts.end()) {
         posts[postId].addLike();
+        
         return true;
     }
     return false;
@@ -258,11 +276,22 @@ bool DataManager::loadPostData() {
         cout << "Failed to open posts.txt or file does not exist.\n";
         return false;
     }
+    posts.clear();
+    file.clear();
+    file.seekg(0); 
 
     int postId;
-    string username, content;
+    string username;
     int likes;
-    while (file >> postId >> username >> content >> likes) {
+    string content;
+
+    while (file >> postId >> username >> likes) {
+        file.ignore();
+        getline(file, content); 
+        if (!content.empty() && content[0] == '\"' && content.back() == '\"') {
+            content = content.substr(1, content.size() - 2);
+        }
+
         Post post(username, content);
         for (int i = 0; i < likes; ++i) {
             post.addLike();
@@ -274,25 +303,22 @@ bool DataManager::loadPostData() {
     cout << "Loaded " << posts.size() << " posts from file.\n";
     return true;
 }
-
 bool DataManager::savePostData() {
-    ofstream file("C:/Users/CT/Desktop/dsa-project/posts.txt", ios::app);
+    ofstream file("C:/Users/CT/Desktop/dsa-project/posts.txt", ios::out);
     if (!file.is_open()) {
         cout << "Failed to open posts.txt for writing.\n";
         return false;
     }
-
     for (const auto& post : posts) {
-        file << post.first << " "
-             << post.second.getUsername() << " "
-             << post.second.getContent() << " "
-             << post.second.getLikes() << "\n";
+        file << post.first << " "                              
+             << post.second.getUsername() << " "              
+             << post.second.getLikes() << " \""              
+             << post.second.getContent() << "\"\n";        
     }
 
     file.close();
     return true;
 }
-
 void DataManager::notifyNewFriendRequest(const string& fromUser, const string& toUser) {
     if (userData.find(toUser) != userData.end()) {
         string notification = "You have a new friend request from " + fromUser + ".";
