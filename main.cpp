@@ -11,7 +11,8 @@ void showFriendRequestMenu() {
     cout << "1. View Friends\n";
     cout << "2. Send Friend Request\n";
     cout << "3. View Friend Requests\n";
-    cout << "4. Back to Main Menu\n";
+    cout << "4. Friend Suggestions\n";
+    cout << "5. Back to Main Menu\n";
 }
 
 void showPostMenu() {
@@ -195,6 +196,8 @@ int main() {
                                 if (action == 1) {
                                     if (dataManager.acceptFriendRequest(friendRequests[requestIndex - 1], currentUser)) {
                                         cout << "Friend request accepted.\n";
+                                            dataManager.saveFriendsList();
+
                                         dataManager.notifyAcceptedFriendRequest(currentUser,friendRequests[requestIndex - 1]);
                                     } else {
                                         cout << "Error: Could not accept friend request.\n";
@@ -213,7 +216,35 @@ int main() {
                             }
                         }
 
-                    } else if (frChoice == 4) {
+                    } 
+                    else if (frChoice == 4) { // Friend Suggestions
+            vector<pair<string, int>> suggestions = dataManager.getFriendSuggestions(currentUser);
+            if (suggestions.empty()) {
+                cout << "No friend suggestions available.\n";
+            } else {
+                cout << "Friend Suggestions:\n";
+                for (int i = 0; i < suggestions.size(); ++i) {
+                    cout << i + 1 << ". " << suggestions[i].first
+                         << " (Mutual Friends: " << suggestions[i].second << ")\n";
+                }
+                int suggestionIndex;
+                cout << "Enter the number of the user to send a friend request: ";
+                cin >> suggestionIndex;
+                if (suggestionIndex > 0 && suggestionIndex <= suggestions.size()) {
+                    string toUser = suggestions[suggestionIndex - 1].first;
+                    if (dataManager.sendFriendRequest(currentUser, toUser)) {
+                        cout << "Friend request sent to " << toUser << endl;
+                        dataManager.notifyNewFriendRequest(currentUser, toUser);
+                    } else {
+                        cout << "Error: Could not send friend request.\n";
+                    }
+                } else {
+                    cout << "Invalid selection.\n";
+                }
+            }
+        }
+                    
+                    else if (frChoice == 5) {
                         break;
                     } else {
                         cout << "Invalid choice. Try again.\n";

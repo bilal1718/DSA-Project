@@ -44,6 +44,7 @@ public:
     void notifyNewFriendRequest(const string& fromUser, const string& toUser);
 void notifyAcceptedFriendRequest(const string& fromUser, const string& toUser);
 void notifyPostLiked(int postId, const string& liker);
+vector<pair<string, int>> getFriendSuggestions(const string& username);
 
     // Accessor functions
     unordered_map<int, Post>& getPosts();

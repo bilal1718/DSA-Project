@@ -295,3 +295,37 @@ void DataManager::notifyPostLiked(int postId, const string& liker) {
 unordered_map<string, User>& DataManager::getUserData() {
     return userData;
 }
+
+
+vector<pair<string, int>> DataManager::getFriendSuggestions(const string& username) {
+    vector<pair<string, int>> suggestions;
+
+    if (userData.find(username) == userData.end()) return suggestions;
+
+    const vector<string>& userFriends = userData[username].getFriends();
+    unordered_set<string> userFriendSet(userFriends.begin(), userFriends.end());
+
+    for (const auto& pair : userData) {
+        const string& potentialFriend = pair.first;
+        if (potentialFriend == username || userFriendSet.count(potentialFriend)) continue;
+
+        const vector<string>& potentialFriendFriends = pair.second.getFriends();
+
+        int mutualFriends = 0;
+        for (const string& friendName : potentialFriendFriends) {
+            if (userFriendSet.count(friendName)) {
+                mutualFriends++;
+            }
+        }
+
+        if (mutualFriends > 0) {
+            suggestions.emplace_back(potentialFriend, mutualFriends);
+        }
+    }
+    sort(suggestions.begin(), suggestions.end(),
+         [](const pair<string, int>& a, const pair<string, int>& b) {
+             return b.second < a.second;
+         });
+
+    return suggestions;
+}
